@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PTCG Battle Visualizer</title>
+<style>
+  :root {
+    --grass:#78c850; --fire:#f08030; --water:#6890f0; --lightning:#f8d030;
+    --psychic:#f85888; --fighting:#c03028; --darkness:#705898; --metal:#b8b8d0;
+    --dragon:#a890f0; --colorless:#d6c8a8; --rainbow:linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#a29bfe);
+    --bg-dark:#0a0e1a; --bg-panel:#131a2e; --border:#2a3458; --accent:#e94560;
+    --gold:#ffd93d; --text:#e0e6ed;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:var(--bg-dark); color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; overflow-x:hidden;
+  }
+  /* --- Holographic background --- */
+  body::before {
+    content:''; position:fixed; top:0; left:0; width:100%; height:100%;
+    background:radial-gradient(ellipse at 20% 30%, rgba(233,69,96,0.08), transparent 50%),
+               radial-gradient(ellipse at 80% 70%, rgba(255,217,61,0.06), transparent 50%),
+               radial-gradient(ellipse at 50% 100%, rgba(104,144,240,0.05), transparent 60%);
+    z-index:-1; pointer-events:none;
+  }
+  .header {
+    text-align:center; padding:20px;
+    background:linear-gradient(135deg,rgba(26,35,64,0.9),rgba(42,52,88,0.9));
+    border-bottom:2px solid var(--accent); position:sticky; top:0; z-index:100;
+    backdrop-filter:blur(10px);
+  }
+  .header h1 { color:var(--gold); font-size:1.8em; text-shadow:0 0 20px rgba(255,217,61,0.3); }
+  .turn-indicator {
+    display:inline-block; margin-top:8px; padding:4px 20px;
+    background:var(--accent); border-radius:20px; font-weight:bold; font-size:0.9em;
+    box-shadow:0 0 15px rgba(233,69,96,0.4);
+  }
+  .arena {
+    display:grid; grid-template-rows:1fr auto 1fr; gap:10px;
+    padding:15px; max-width:1200px; margin:0 auto;
+  }
+  .player-area {
+    background:var(--bg-panel); border-radius:12px; padding:15px;
+    border:1px solid var(--border); transition:border-color 0.3s;
+  }
+  .player-area.active-turn {
+    border-color:var(--accent); box-shadow:0 0 25px rgba(233,69,96,0.15);
+  }
+  .player-header {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-bottom:12px; flex-wrap:wrap; gap:8px;
+  }
+  .player-name { font-size:1.1em; font-weight:bold; color:var(--gold); }
+  .player-stats { display:flex; gap:15px; font-size:0.85em; color:var(--text); opacity:0.8; }
+  .stat-badge { background:rgba(255,255,255,0.1); padding:2px 10px; border-radius:10px; }
+  /* --- Prize cards --- */
+  .prizes { display:flex; gap:6px; }
+  .prize-card {
+    width:32px; height:42px; border-radius:4px;
+    background:linear-gradient(135deg,#2a3458,#1a2340);
+    border:2px solid var(--border); display:flex; align-items:center; justify-content:center;
+    font-size:0.6em; color:var(--gold); transition:all 0.4s; cursor:default;
+  }
+  .prize-card.taken {
+    transform:rotateY(180deg) scale(0.8); opacity:0.3;
+    background:transparent; border-style:dashed;
+  }
+  .prize-card::before { content:'🎁'; font-size:1.2em; }
+  .prize-card.taken::before { content:'✓'; }
+  /* --- Board layout --- */
+  .board { display:grid; grid-template-columns:1fr 2fr; gap:12px; }
+  .active-slot {
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+  }
+  .bench { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+  .bench-slot { width:90px; }
+  /* --- Card panel --- */
+  .card-panel {
+    width:100%; min-height:140px; border-radius:10px; padding:8px;
+    position:relative; overflow:hidden; transition:all 0.3s;
+    background:rgba(13,19,32,0.95);
+  }
+  .card-panel.active-card { min-height:180px; }
+  .card-panel::before {
+    content:''; position:absolute; inset:0; border-radius:10px; padding:2px;
+    background:var(--card-glow,#666);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor; mask-composite:exclude;
+    z-index:1; pointer-events:none;
+  }
+  .card-panel.type-grass { --card-glow:var(--grass); box-shadow:0 0 15px rgba(120,200,80,0.2); }
+  .card-panel.type-fire { --card-glow:var(--fire); box-shadow:0 0 15px rgba(240,128,48,0.2); }
+  .card-panel.type-water { --card-glow:var(--water); box-shadow:0 0 15px rgba(104,144,240,0.2); }
+  .card-panel.type-lightning { --card-glow:var(--lightning); box-shadow:0 0 15px rgba(248,208,48,0.2); }
+  .card-panel.type-psychic { --card-glow:var(--psychic); box-shadow:0 0 15px rgba(248,88,136,0.2); }
+  .card-panel.type-fighting { --card-glow:var(--fighting); box-shadow:0 0 15px rgba(192,48,40,0.2); }
+  .card-panel.type-darkness { --card-glow:var(--darkness); box-shadow:0 0 15px rgba(112,88,152,0.2); }
+  .card-panel.type-metal { --card-glow:var(--metal); box-shadow:0 0 15px rgba(184,184,208,0.2); }
+  .card-panel.type-dragon { --card-glow:var(--dragon); box-shadow:0 0 15px rgba(168,144,240,0.2); }
+  .card-panel.type-colorless { --card-glow:var(--colorless); box-shadow:0 0 15px rgba(214,200,168,0.2); }
+  .card-panel.type-rainbow { --card-glow:var(--rainbow); box-shadow:0 0 20px rgba(255,107,107,0.15); }
+  .card-panel.empty { opacity:0.3; border:2px dashed var(--border); background:transparent; }
+  .card-panel.empty::before { display:none; }
+  .card-name { font-size:0.75em; font-weight:bold; text-align:center; margin-bottom:4px; z-index:2; position:relative; }
+  .card-hp-text { font-size:0.65em; text-align:right; color:#ff6b6b; z-index:2; position:relative; }
+  /* --- HP bar --- */
+  .hp-bar-container { width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; margin:4px 0; z-index:2; position:relative; }
+  .hp-bar {
+    height:100%; background:linear-gradient(90deg,#51cf66,#51cf66); border-radius:4px;
+    transition:width 0.6s cubic-bezier(0.4,0,0.2,1), background 0.3s;
+  }
+  .hp-bar.medium { background:linear-gradient(90deg,#ffd43b,#fab005); }
+  .hp-bar.low { background:linear-gradient(90deg,#ff6b6b,#e03131); }
+  /* --- Energy icons --- */
+  .energy-row { display:flex; gap:3px; flex-wrap:wrap; justify-content:center; z-index:2; position:relative; }
+  .energy-icon { width:14px; height:14px; border-radius:50%; font-size:0.5em; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; }
+  .energy-grass { background:var(--grass); }
+  .energy-fire { background:var(--fire); }
+  .energy-water { background:var(--water); }
+  .energy-lightning { background:var(--lightning); color:#333; }
+  .energy-psychic { background:var(--psychic); }
+  .energy-fighting { background:var(--fighting); }
+  .energy-darkness { background:var(--darkness); }
+  .energy-metal { background:var(--metal); }
+  .energy-colorless { background:var(--colorless); color:#333; }
+  /* --- Status conditions --- */
+  .status-row { display:flex; gap:4px; justify-content:center; margin-top:4px; z-index:2; position:relative; }
+  .status-icon {
+    width:20px; height:20px; border-radius:50%; font-size:0.7em;
+    display:flex; align-items:center; justify-content:center;
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.15);} }
+  .status-poison { background:#a33; }
+  .status-burn { background:#e80; }
+  .status-sleep { background:#66c; }
+  .status-paralysis { background:#fc0; color:#333; }
+  .status-confusion { background:#c6c; }
+  /* --- Center divider --- */
+  .center-divider {
+    text-align:center; padding:10px; font-size:1.5em; color:var(--accent);
+    text-shadow:0 0 10px rgba(233,69,96,0.3);
+  }
+  /* --- Duel log --- */
+  .duel-log {
+    background:var(--bg-panel); border:1px solid var(--border); border-radius:12px;
+    padding:15px; max-width:1200px; margin:15px auto; max-height:250px; overflow-y:auto;
+  }
+  .duel-log h3 { color:var(--gold); margin-bottom:10px; font-size:1em; }
+  .log-entry {
+    padding:4px 10px; margin:2px 0; border-left:3px solid transparent;
+    font-size:0.85em; animation:fadeIn 0.3s; border-radius:0 4px 4px 0;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateX(-10px);} to{opacity:1;transform:translateX(0);} }
+  .log-entry.draw { border-left-color:var(--water); }
+  .log-entry.attack { border-left-color:var(--fire); }
+  .log-entry.hp_change { border-left-color:var(--accent); color:#ff9999; }
+  .log-entry.evolve { border-left-color:var(--psychic); }
+  .log-entry.ko { border-left-color:#f00; font-weight:bold; background:rgba(255,0,0,0.05); }
+  .log-entry.turn { border-left-color:var(--gold); font-weight:bold; color:var(--gold); }
+  .log-entry.result { border-left-color:var(--gold); font-weight:bold; font-size:1em; }
+  /* --- Controls --- */
+  .controls {
+    display:flex; justify-content:center; align-items:center; gap:15px;
+    padding:15px; flex-wrap:wrap; max-width:1200px; margin:0 auto;
+  }
+  .controls button {
+    background:var(--accent); color:#fff; border:none; padding:8px 20px;
+    border-radius:8px; cursor:pointer; font-size:0.9em; transition:all 0.2s;
+  }
+  .controls button:hover { background:#c81e45; transform:translateY(-1px); box-shadow:0 4px 12px rgba(233,69,96,0.3); }
+  .controls button:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+  .scrubber {
+    flex:1; min-width:200px; height:6px; -webkit-appearance:none; appearance:none;
+    background:var(--border); border-radius:3px; outline:none;
+  }
+  .scrubber::-webkit-slider-thumb {
+    -webkit-appearance:none; appearance:none; width:18px; height:18px;
+    border-radius:50%; background:var(--gold); cursor:pointer;
+    box-shadow:0 0 10px rgba(255,217,61,0.5);
+  }
+  .step-display { font-size:0.85em; color:var(--gold); min-width:80px; text-align:center; }
+  .file-input-wrapper { margin:15px auto; text-align:center; max-width:1200px; }
+  .file-input-wrapper input[type=file] {
+    background:var(--bg-panel); border:1px dashed var(--border); padding:10px 20px;
+    border-radius:8px; color:var(--text); cursor:pointer;
+  }
+  .placeholder-msg {
+    text-align:center; padding:40px; color:var(--text); opacity:0.5; font-size:1.1em;
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚔️ PTCG Battle Visualizer</h1>
+  <div class="turn-indicator" id="turnIndicator">No match loaded</div>
+</div>
+
+<div class="file-input-wrapper">
+  <input type="file" id="fileInput" accept=".json">
+</div>
+
+<div class="placeholder-msg" id="placeholderMsg">
+  📁 Load a match log JSON file to begin visualization
+</div>
+
+<div id="visualizer" style="display:none;">
+  <div class="arena">
+    <!-- Opponent (top) -->
+    <div class="player-area" id="oppArea">
+      <div class="player-header">
+        <span class="player-name">Opponent</span>
+        <div class="player-stats">
+          <span class="stat-badge">Deck: <span id="oppDeck">0</span></span>
+          <span class="stat-badge">Hand: <span id="oppHand">0</span></span>
+          <span class="stat-badge">Discard: <span id="oppDiscard">0</span></span>
+        </div>
+        <div class="prizes" id="oppPrizes"></div>
+      </div>
+      <div class="board">
+        <div class="active-slot"><div class="card-panel active-card" id="oppActive"></div></div>
+        <div class="bench" id="oppBench"></div>
+      </div>
+    </div>
+
+    <div class="center-divider">⚔️ VS ⚔️</div>
+
+    <!-- Player (bottom) -->
+    <div class="player-area" id="playerArea">
+      <div class="player-header">
+        <span class="player-name">You</span>
+        <div class="player-stats">
+          <span class="stat-badge">Deck: <span id="playerDeck">0</span></span>
+          <span class="stat-badge">Hand: <span id="playerHand">0</span></span>
+          <span class="stat-badge">Discard: <span id="playerDiscard">0</span></span>
+        </div>
+        <div class="prizes" id="playerPrizes"></div>
+      </div>
+      <div class="board">
+        <div class="active-slot"><div class="card-panel active-card" id="playerActive"></div></div>
+        <div class="bench" id="playerBench"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="duel-log">
+    <h3>📜 Duel Log</h3>
+    <div id="logContainer"></div>
+  </div>
+
+  <div class="controls">
+    <button id="prevBtn" onclick="stepMatch(-1)">⏮ Prev</button>
+    <input type="range" class="scrubber" id="scrubber" min="0" max="0" value="0" oninput="jumpToStep(this.value)">
+    <button id="nextBtn" onclick="stepMatch(1)">Next ⏭</button>
+    <button id="playBtn" onclick="togglePlay()">▶ Play</button>
+    <span class="step-display" id="stepDisplay">0 / 0</span>
+  </div>
+</div>
+
+<script>
+let matchData = null;
+let currentStep = 0;
+let isPlaying = false;
+let playInterval = null;
+
+const ENERGY_COLORS = {
+  GRASS:'grass', FIRE:'fire', WATER:'water', LIGHTNING:'lightning',
+  PSYCHIC:'psychic', FIGHTING:'fighting', DARKNESS:'darkness', METAL:'metal',
+  DRAGON:'dragon', COLORLESS:'colorless', RAINBOW:'rainbow',
+  TEAM_ROCKET:'darkness'
+};
+
+// --- File loading ---
+document.getElementById('fileInput').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      matchData = JSON.parse(ev.target.result);
+      initVisualizer();
+    } catch(err) {
+      alert('Invalid JSON file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+function initVisualizer() {
+  document.getElementById('placeholderMsg').style.display = 'none';
+  document.getElementById('visualizer').style.display = 'block';
+  const steps = matchData.steps || [];
+  const scrubber = document.getElementById('scrubber');
+  scrubber.max = steps.length - 1;
+  scrubber.value = 0;
+  currentStep = 0;
+  renderStep(0);
+}
+
+function renderStep(stepIdx) {
+  if (!matchData || !matchData.steps || stepIdx >= matchData.steps.length) return;
+  currentStep = stepIdx;
+  const step = matchData.steps[stepIdx];
+
+  // Determine which player's observation to use for full board
+  // Player 0's observation has both players' states (own=full, opp=partial)
+  let obs = null;
+  let ourIdx = 0;
+  for (let p = 0; p < step.observations.length; p++) {
+    if (step.observations[p] && step.observations[p].current) {
+      obs = step.observations[p];
+      ourIdx = obs.current.yourIndex || 0;
+      break;
+    }
+  }
+  if (!obs || !obs.current) return;
+
+  const current = obs.current;
+  const players = current.players || [];
+  if (players.length < 2) return;
+
+  const turn = current.turn || 0;
+  const firstPlayer = current.firstPlayer;
+  const activePlayerIdx = (turn % 2 === 0) ? firstPlayer : (1 - firstPlayer);
+
+  // Highlight active player
+  document.getElementById('playerArea').classList.toggle('active-turn', ourIdx === activePlayerIdx);
+  document.getElementById('oppArea').classList.toggle('active-turn', (1-ourIdx) === activePlayerIdx);
+
+  document.getElementById('turnIndicator').textContent = `Turn ${turn + 1} — ${activePlayerIdx === ourIdx ? 'Your' : "Opponent's"} Move`;
+
+  // Render both players
+  const ourPlayer = players[ourIdx] || {};
+  const oppPlayer = players[1 - ourIdx] || {};
+
+  renderPlayer('player', ourPlayer);
+  renderPlayer('opp', oppPlayer);
+
+  // Render logs
+  renderLogs(step, stepIdx);
+
+  // Update controls
+  document.getElementById('scrubber').value = stepIdx;
+  document.getElementById('stepDisplay').textContent = `${stepIdx + 1} / ${matchData.steps.length}`;
+  document.getElementById('prevBtn').disabled = stepIdx === 0;
+  document.getElementById('nextBtn').disabled = stepIdx === matchData.steps.length - 1;
+}
+
+function renderPlayer(prefix, player) {
+  // Stats
+  document.getElementById(prefix + 'Deck').textContent = player.deckCount || 0;
+  document.getElementById(prefix + 'Hand').textContent = player.handCount || 0;
+  document.getElementById(prefix + 'Discard').textContent = (player.discard || []).length;
+
+  // Prizes
+  const prizeContainer = document.getElementById(prefix + 'Prizes');
+  prizeContainer.innerHTML = '';
+  const prizes = player.prize || [];
+  for (let i = 0; i < 6; i++) {
+    const div = document.createElement('div');
+    div.className = 'prize-card';
+    if (i < prizes.length && prizes[i] !== null && prizes[i] !== undefined) {
+      div.classList.add('taken');
+    }
+    prizeContainer.appendChild(div);
+  }
+
+  // Active Pokémon
+  const activeEl = document.getElementById(prefix + 'Active');
+  const active = player.active;
+  if (active && active.cardId) {
+    renderCardPanel(activeEl, active, true);
+  } else if (active) {
+    // Face-down
+    activeEl.className = 'card-panel active-card type-colorless empty';
+    activeEl.innerHTML = '<div class="card-name">???</div><div style="text-align:center;font-size:2em;opacity:0.3">🂠</div>';
+  } else {
+    activeEl.className = 'card-panel active-card empty';
+    activeEl.innerHTML = '';
+  }
+
+  // Bench
+  const benchEl = document.getElementById(prefix + 'Bench');
+  benchEl.innerHTML = '';
+  const bench = player.bench || [];
+  for (let i = 0; i < 5; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'bench-slot';
+    const mon = bench[i];
+    if (mon && mon.cardId) {
+      const panel = document.createElement('div');
+      renderCardPanel(panel, mon, false);
+      slot.appendChild(panel);
+    } else {
+      const empty = document.createElement('div');
+      empty.className = 'card-panel empty';
+      empty.style.minHeight = '100px';
+      empty.innerHTML = '';
+      slot.appendChild(empty);
+    }
+    benchEl.appendChild(slot);
+  }
+}
+
+function renderCardPanel(el, mon, isActive) {
+  el.className = 'card-panel' + (isActive ? ' active-card' : '');
+  const energyType = mon.energyType || 'COLORLESS';
+  const typeClass = ENERGY_COLORS[energyType] || 'colorless';
+  el.classList.add('type-' + typeClass);
+
+  const name = mon.name || mon.cardId || 'Unknown';
+  const hp = mon.hp || 0;
+  const damage = mon.damage || 0;
+  const currentHp = Math.max(0, hp - damage);
+  const hpPct = hp > 0 ? (currentHp / hp * 100) : 0;
+  const hpClass = hpPct > 50 ? '' : hpPct > 25 ? 'medium' : 'low';
+
+  let html = '';
+  html += `<div class="card-name">${escapeHtml(name)}</div>`;
+  html += `<div class="card-hp-text">HP: ${currentHp}/${hp}</div>`;
+  html += `<div class="hp-bar-container"><div class="hp-bar ${hpClass}" style="width:${hpPct}%"></div></div>`;
+
+  // Energy
+  const energies = mon.energies || [];
+  if (energies.length > 0) {
+    html += '<div class="energy-row">';
+    energies.forEach(e => {
+      const eType = typeof e === 'string' ? e : (e.energyType || 'COLORLESS');
+      const eClass = ENERGY_COLORS[eType] || 'colorless';
+      html += `<div class="energy-icon energy-${eClass}" title="${eType}">●</div>`;
+    });
+    html += '</div>';
+  }
+
+  // Status conditions
+  const statuses = [];
+  if (mon.poisoned) statuses.push({cls:'poison', icon:'☠', title:'Poisoned'});
+  if (mon.burned) statuses.push({cls:'burn', icon:'🔥', title:'Burned'});
+  if (mon.asleep) statuses.push({cls:'sleep', icon:'💤', title:'Asleep'});
+  if (mon.paralyzed) statuses.push({cls:'paralysis', icon:'⚡', title:'Paralyzed'});
+  if (mon.confused) statuses.push({cls:'confusion', icon:'❓', title:'Confused'});
+  if (statuses.length > 0) {
+    html += '<div class="status-row">';
+    statuses.forEach(s => {
+      html += `<div class="status-icon status-${s.cls}" title="${s.title}">${s.icon}</div>`;
+    });
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function renderLogs(step, stepIdx) {
+  const container = document.getElementById('logContainer');
+  container.innerHTML = '';
+
+  // Collect logs from all observations in this step
+  let allLogs = [];
+  step.observations.forEach((obs, i) => {
+    (obs.logs || []).forEach(log => {
+      allLogs.push({ ...log, _playerIdx: i });
+    });
+  });
+
+  // Also include actions taken
+  if (step.actions) {
+    step.actions.forEach((action, i) => {
+      if (action !== null && action !== undefined) {
+        allLogs.push({
+          type: 'ACTION',
+          text: `Player ${i} chose: ${JSON.stringify(action)}`,
+          _playerIdx: i
+        });
+      }
+    });
+  }
+
+  if (allLogs.length === 0) {
+    container.innerHTML = '<div class="log-entry turn">--- Step ' + (stepIdx + 1) + ' ---</div>';
+    return;
+  }
+
+  allLogs.forEach(log => {
+    const entry = document.createElement('div');
+    const logType = (log.type || log.logType || 'UNKNOWN').toUpperCase();
+    entry.className = 'log-entry ' + logType.toLowerCase();
+    entry.textContent = translateLog(log);
+    container.appendChild(entry);
+  });
+}
+
+function translateLog(log) {
+  const type = (log.type || log.logType || 'UNKNOWN').toUpperCase();
+  const player = log.playerIndex !== undefined ? `P${log.playerIndex}` : '';
+  const name = log.name || log.cardName || '';
+  const cardId = log.cardId || '';
+  const damage = log.damage || log.value || 0;
+
+  switch(type) {
+    case 'DRAW':
+      return `${player} drew a card.`;
+    case 'PLAY':
+    case 'PLAY_CARD':
+      return `${player} played ${name || cardId}.`;
+    case 'ATTACH':
+    case 'ATTACH_ENERGY':
+      return `${player} attached energy to ${name || 'a Pokémon'}.`;
+    case 'EVOLVE':
+      return `${player} evolved to ${name || cardId}.`;
+    case 'ATTACK':
+      return `${player} attacks with ${name || 'a move'}!`;
+    case 'HP_CHANGE':
+      return `${name || 'A Pokémon'} took ${damage} damage!`;
+    case 'KO':
+    case 'KNOCKOUT':
+      return `💥 ${name || 'A Pokémon'} was Knocked Out!`;
+    case 'COIN_FLIP':
+    case 'COIN':
+      return `🪙 Coin flip: ${log.result || 'unknown'}.`;
+    case 'TURN_START':
+    case 'TURN':
+      return `--- Turn ${log.turn || ''} ---`;
+    case 'MULLIGAN':
+      return `${player} took a mulligan.`;
+    case 'PRIZE_TAKE':
+    case 'PRIZE':
+      return `${player} took a Prize card!`;
+    case 'STATUS':
+      return `${name || 'A Pokémon'} is now ${log.status || 'affected'}.`;
+    case 'RETREAT':
+      return `${player} retreated ${name || 'their Pokémon'}.`;
+    case 'RESULT':
+      return `🏆 Game Over! Result: ${log.result || 'Unknown'}`;
+    case 'ACTION':
+      return log.text || '';
+    default:
+      return `${type}: ${name || cardId || ''} ${damage ? '(' + damage + ')' : ''}`.trim();
+  }
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// --- Navigation ---
+function stepMatch(delta) {
+  if (!matchData) return;
+  const newStep = currentStep + delta;
+  if (newStep >= 0 && newStep < matchData.steps.length) {
+    renderStep(newStep);
+  }
+}
+
+function jumpToStep(idx) {
+  if (!matchData) return;
+  renderStep(parseInt(idx));
+}
+
+function togglePlay() {
+  if (!matchData) return;
+  const btn = document.getElementById('playBtn');
+  if (isPlaying) {
+    clearInterval(playInterval);
+    isPlaying = false;
+    btn.textContent = '▶ Play';
+  } else {
+    isPlaying = true;
+    btn.textContent = '⏸ Pause';
+    playInterval = setInterval(() => {
+      if (currentStep < matchData.steps.length - 1) {
+        renderStep(currentStep + 1);
+      } else {
+        clearInterval(playInterval);
+        isPlaying = false;
+        btn.textContent = '▶ Play';
+      }
+    }, 1000);
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (!matchData) return;
+  if (e.key === 'ArrowLeft') stepMatch(-1);
+  if (e.key === 'ArrowRight') stepMatch(1);
+  if (e.key === ' ') { e.preventDefault(); togglePlay(); }
+});
+</script>
+</body>
+</html>
