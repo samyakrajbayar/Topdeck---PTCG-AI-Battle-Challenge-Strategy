@@ -1,0 +1,401 @@
+{
+  "steps": [
+    {
+      "step": 0,
+      "observations": [
+        {
+          "current": {
+            "turn": 0,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": {
+                  "cardId": "charmander_001",
+                  "name": "Charmander",
+                  "hp": 60,
+                  "damage": 0,
+                  "energyType": "FIRE",
+                  "energies": []
+                },
+                "bench": [],
+                "deckCount": 48,
+                "handCount": 7,
+                "prize": [null, null, null, null, null, null]
+              },
+              {
+                "active": {
+                  "cardId": "squirtle_001",
+                  "name": "Squirtle",
+                  "hp": 60,
+                  "damage": 0,
+                  "energyType": "WATER",
+                  "energies": []
+                },
+                "bench": [],
+                "deckCount": 48,
+                "handCount": 7,
+                "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": []
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 1,
+      "observations": [
+        {
+          "current": {
+            "turn": 1,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmander_001", "name": "Charmander", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": ["FIRE"] },
+                "bench": [],
+                "deckCount": 47, "handCount": 6, "prize": [null, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "squirtle_001", "name": "Squirtle", "hp": 60, "damage": 0, "energyType": "WATER", "energies": [] },
+                "bench": [], "deckCount": 48, "handCount": 7, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "ATTACK", "attackId": "scratch" }] },
+          "logs": [
+            { "type": "TURN", "turn": 1 },
+            { "type": "DRAW", "playerIndex": 0 },
+            { "type": "ATTACH", "playerIndex": 0, "name": "Charmander" }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 2,
+      "observations": [
+        {
+          "current": {
+            "turn": 1,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmander_001", "name": "Charmander", "hp": 60, "damage": 10, "energyType": "FIRE", "energies": ["FIRE"] },
+                "bench": [], "deckCount": 47, "handCount": 6, "prize": [null, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "squirtle_001", "name": "Squirtle", "hp": 60, "damage": 0, "energyType": "WATER", "energies": [] },
+                "bench": [], "deckCount": 48, "handCount": 7, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": [
+            { "type": "ATTACK", "playerIndex": 0, "name": "Scratch" },
+            { "type": "HP_CHANGE", "name": "Squirtle", "damage": 10 }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 3,
+      "observations": [
+        {
+          "current": {
+            "turn": 2,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmander_001", "name": "Charmander", "hp": 60, "damage": 10, "energyType": "FIRE", "energies": ["FIRE"] },
+                "bench": [], "deckCount": 47, "handCount": 6, "prize": [null, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "squirtle_001", "name": "Squirtle", "hp": 60, "damage": 10, "energyType": "WATER", "energies": ["WATER"] },
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 46, "handCount": 5, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": [
+            { "type": "TURN", "turn": 2 },
+            { "type": "DRAW", "playerIndex": 1 },
+            { "type": "PLAY", "playerIndex": 1, "name": "Froakie" },
+            { "type": "ATTACH", "playerIndex": 1, "name": "Squirtle" }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 4,
+      "observations": [
+        {
+          "current": {
+            "turn": 2,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmander_001", "name": "Charmander", "hp": 60, "damage": 30, "energyType": "FIRE", "energies": ["FIRE"] },
+                "bench": [], "deckCount": 47, "handCount": 6, "prize": [null, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "squirtle_001", "name": "Squirtle", "hp": 60, "damage": 10, "energyType": "WATER", "energies": ["WATER"] },
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 46, "handCount": 5, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": [
+            { "type": "ATTACK", "playerIndex": 1, "name": "Bubble" },
+            { "type": "HP_CHANGE", "name": "Charmander", "damage": 20 }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 5,
+      "observations": [
+        {
+          "current": {
+            "turn": 3,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmeleon_001", "name": "Charmeleon", "hp": 90, "damage": 0, "energyType": "FIRE", "energies": ["FIRE", "FIRE"] },
+                "bench": [{ "cardId": "vulpix_001", "name": "Vulpix", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [null, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "squirtle_001", "name": "Squirtle", "hp": 60, "damage": 10, "energyType": "WATER", "energies": ["WATER"] },
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 46, "handCount": 5, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "ATTACK", "attackId": "fire_fang" }] },
+          "logs": [
+            { "type": "TURN", "turn": 3 },
+            { "type": "DRAW", "playerIndex": 0 },
+            { "type": "EVOLVE", "playerIndex": 0, "name": "Charmeleon" },
+            { "type": "PLAY", "playerIndex": 0, "name": "Vulpix" },
+            { "type": "ATTACH", "playerIndex": 0, "name": "Charmeleon" }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 6,
+      "observations": [
+        {
+          "current": {
+            "turn": 3,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmeleon_001", "name": "Charmeleon", "hp": 90, "damage": 0, "energyType": "FIRE", "energies": ["FIRE", "FIRE"] },
+                "bench": [{ "cardId": "vulpix_001", "name": "Vulpix", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [null, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "squirtle_001", "name": "Squirtle", "hp": 60, "damage": 60, "energyType": "WATER", "energies": ["WATER"] },
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 46, "handCount": 5, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": [
+            { "type": "ATTACK", "playerIndex": 0, "name": "Fire Fang" },
+            { "type": "HP_CHANGE", "name": "Squirtle", "damage": 50 }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 7,
+      "observations": [
+        {
+          "current": {
+            "turn": 3,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmeleon_001", "name": "Charmeleon", "hp": 90, "damage": 0, "energyType": "FIRE", "energies": ["FIRE", "FIRE"] },
+                "bench": [{ "cardId": "vulpix_001", "name": "Vulpix", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [1, null, null, null, null, null]
+              },
+              {
+                "active": null,
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 46, "handCount": 5, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": [
+            { "type": "KO", "name": "Squirtle" },
+            { "type": "PRIZE", "playerIndex": 0 }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 8,
+      "observations": [
+        {
+          "current": {
+            "turn": 4,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmeleon_001", "name": "Charmeleon", "hp": 90, "damage": 0, "energyType": "FIRE", "energies": ["FIRE", "FIRE"] },
+                "bench": [{ "cardId": "vulpix_001", "name": "Vulpix", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [1, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "wartortle_001", "name": "Wartortle", "hp": 90, "damage": 0, "energyType": "WATER", "energies": ["WATER"] },
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": [
+            { "type": "TURN", "turn": 4 },
+            { "type": "DRAW", "playerIndex": 1 },
+            { "type": "EVOLVE", "playerIndex": 1, "name": "Wartortle" },
+            { "type": "ATTACH", "playerIndex": 1, "name": "Wartortle" }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 9,
+      "observations": [
+        {
+          "current": {
+            "turn": 4,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charmeleon_001", "name": "Charmeleon", "hp": 90, "damage": 40, "energyType": "FIRE", "energies": ["FIRE", "FIRE"], "burned": true },
+                "bench": [{ "cardId": "vulpix_001", "name": "Vulpix", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [1, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "wartortle_001", "name": "Wartortle", "hp": 90, "damage": 0, "energyType": "WATER", "energies": ["WATER"] },
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "END" }] },
+          "logs": [
+            { "type": "ATTACK", "playerIndex": 1, "name": "Aqua Tail" },
+            { "type": "HP_CHANGE", "name": "Charmeleon", "damage": 40 },
+            { "type": "STATUS", "name": "Charmeleon", "status": "Burned" }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 10,
+      "observations": [
+        {
+          "current": {
+            "turn": 5,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": null,
+            "players": [
+              {
+                "active": { "cardId": "charizard_001", "name": "Charizard", "hp": 150, "damage": 10, "energyType": "FIRE", "energies": ["FIRE", "FIRE", "FIRE"] },
+                "bench": [{ "cardId": "vulpix_001", "name": "Vulpix", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": [] }],
+                "deckCount": 44, "handCount": 3, "prize": [1, null, null, null, null, null]
+              },
+              {
+                "active": { "cardId": "wartortle_001", "name": "Wartortle", "hp": 90, "damage": 0, "energyType": "WATER", "energies": ["WATER"] },
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": { "type": "MAIN", "maxCount": 1, "option": [{ "type": "ATTACK", "attackId": "fire_blast" }] },
+          "logs": [
+            { "type": "TURN", "turn": 5 },
+            { "type": "DRAW", "playerIndex": 0 },
+            { "type": "EVOLVE", "playerIndex": 0, "name": "Charizard" },
+            { "type": "ATTACH", "playerIndex": 0, "name": "Charizard" },
+            { "type": "HP_CHANGE", "name": "Charmeleon", "damage": 10, "_note": "Burn damage between turns" }
+          ]
+        }
+      ],
+      "actions": [[0]]
+    },
+    {
+      "step": 11,
+      "observations": [
+        {
+          "current": {
+            "turn": 5,
+            "yourIndex": 0,
+            "firstPlayer": 0,
+            "result": 1,
+            "players": [
+              {
+                "active": { "cardId": "charizard_001", "name": "Charizard", "hp": 150, "damage": 10, "energyType": "FIRE", "energies": ["FIRE", "FIRE", "FIRE"] },
+                "bench": [{ "cardId": "vulpix_001", "name": "Vulpix", "hp": 60, "damage": 0, "energyType": "FIRE", "energies": [] }],
+                "deckCount": 44, "handCount": 3, "prize": [1, 2, null, null, null, null]
+              },
+              {
+                "active": null,
+                "bench": [{ "cardId": "froakie_001", "name": "Froakie", "hp": 50, "damage": 0, "energyType": "WATER", "energies": [] }],
+                "deckCount": 45, "handCount": 4, "prize": [null, null, null, null, null, null]
+              }
+            ]
+          },
+          "select": null,
+          "logs": [
+            { "type": "ATTACK", "playerIndex": 0, "name": "Fire Blast" },
+            { "type": "HP_CHANGE", "name": "Wartortle", "damage": 120, "_note": "Super effective!" },
+            { "type": "KO", "name": "Wartortle" },
+            { "type": "PRIZE", "playerIndex": 0 },
+            { "type": "RESULT", "result": "You Win!" }
+          ]
+        }
+      ],
+      "actions": [null]
+    }
+  ]
+}
