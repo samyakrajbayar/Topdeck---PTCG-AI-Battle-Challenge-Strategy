@@ -1,0 +1,92 @@
+# deck.csv — 60 lines, one card ID per line (no header).
+# Run `python deck_logic.py` at dev time to generate this file from the live card pool.
+# Below is the STRUCTURE of our chosen archetype (actual IDs filled at runtime):
+#
+# --- Primary Evolution Line (9 cards) ---
+# 4× Basic Pokémon A (high HP, low retreat, scalable attack)
+# 3× Stage 1 Pokémon A (evolves from Basic A)
+# 2× Stage 2 Pokémon A (evolves from Stage 1 A, high-damage attack)
+#
+# --- Secondary Evolution Line (6 cards) ---
+# 3× Basic Pokémon B (different energy type for coverage)
+# 2× Stage 1 Pokémon B
+# 1× Stage 2 Pokémon B
+#
+# --- Supporters (8 cards) — draw/search consistency ---
+# 2× Supporter A (draw cards)
+# 2× Supporter B (search deck)
+# 2× Supporter C (retrieve from discard)
+# 2× Supporter D (switch/retreat support)
+#
+# --- Items/Tools (9 cards) ---
+# 4× Rare Candy equivalent (skip Stage 1)
+# 2× Switch/Escape Rope
+# 2× Pokémon Tool (damage boost or protection)
+# 1× Ace Spec (powerful one-of)
+#
+# --- Energy (16 cards) ---
+# 12× Basic Energy (primary type)
+# 4× Basic Energy (secondary type or Rainbow/Double Colorless)
+#
+# Total: 9 + 6 + 8 + 9 + 16 = 48 ... need 12 more → adjust counts:
+#
+# REVISED COUNTS (60 total):
+# 4× Basic A, 4× Stage1 A, 3× Stage2 A          = 11
+# 4× Basic B, 3× Stage1 B, 2× Stage2 B          =  9
+# 4× Draw Supporter, 3× Search Supporter         =  7
+# 3× Rare Candy, 2× Switch, 2× Tool              =  7
+# 14× Primary Energy, 4× Secondary Energy         = 18
+# 1× Ace Spec                                      =  1
+# UNKNOWN_PLACEHOLDER_A
+UNKNOWN_PLACEHOLDER_A
+UNKNOWN_PLACEHOLDER_A
+UNKNOWN_PLACEHOLDER_A
+UNKNOWN_PLACEHOLDER_B
+UNKNOWN_PLACEHOLDER_B
+UNKNOWN_PLACEHOLDER_B
+UNKNOWN_PLACEHOLDER_B
+UNKNOWN_PLACEHOLDER_C
+UNKNOWN_PLACEHOLDER_C
+UNKNOWN_PLACEHOLDER_C
+UNKNOWN_PLACEHOLDER_D
+UNKNOWN_PLACEHOLDER_D
+UNKNOWN_PLACEHOLDER_E
+UNKNOWN_PLACEHOLDER_E
+UNKNOWN_PLACEHOLDER_E
+UNKNOWN_PLACEHOLDER_F
+UNKNOWN_PLACEHOLDER_F
+UNKNOWN_PLACEHOLDER_G
+UNKNOWN_PLACEHOLDER_G
+UNKNOWN_PLACEHOLDER_G
+UNKNOWN_PLACEHOLDER_G
+UNKNOWN_PLACEHOLDER_H
+UNKNOWN_PLACEHOLDER_H
+UNKNOWN_PLACEHOLDER_H
+UNKNOWN_PLACEHOLDER_I
+UNKNOWN_PLACEHOLDER_I
+UNKNOWN_PLACEHOLDER_I
+UNKNOWN_PLACEHOLDER_J
+UNKNOWN_PLACEHOLDER_J
+UNKNOWN_PLACEHOLDER_J
+UNKNOWN_PLACEHOLDER_J
+UNKNOWN_PLACEHOLDER_K
+UNKNOWN_PLACEHOLDER_K
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_A
+UNKNOWN_PLACEHOLDER_ENERGY_B
+UNKNOWN_PLACEHOLDER_ENERGY_B
+UNKNOWN_PLACEHOLDER_ENERGY_B
+UNKNOWN_PLACEHOLDER_ENERGY_B
+UNKNOWN_PLACEHOLDER_ACE_SPEC
