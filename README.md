@@ -14,6 +14,11 @@ PTCG AI Battle Challenge (Simulation Category), built on the HEROZ/UTokyo
 
 ---
 
+## Packaging reminder: 
+Place main.py at the top level of your submission directory (NOT inside a subfolder). Run tar -czvf submission.tar.gz * from inside that directory. Include deck.csv alongside it.
+
+---
+
 ## Project Structure
 
 ```
