@@ -1,4 +1,4 @@
-# PTCG AI Battle Challenge — Complete Solution
+# PTCG AI Battle Challenge — Topdeck
 
 ## Overview
 
