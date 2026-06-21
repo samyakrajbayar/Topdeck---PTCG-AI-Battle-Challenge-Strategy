@@ -3,199 +3,381 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PTCG Battle Visualizer</title>
+<title>PTCG Pixel Battle Visualizer</title>
 <style>
-  :root {
-    --grass:#78c850; --fire:#f08030; --water:#6890f0; --lightning:#f8d030;
-    --psychic:#f85888; --fighting:#c03028; --darkness:#705898; --metal:#b8b8d0;
-    --dragon:#a890f0; --colorless:#d6c8a8; --rainbow:linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#a29bfe);
-    --bg-dark:#0a0e1a; --bg-panel:#131a2e; --border:#2a3458; --accent:#e94560;
-    --gold:#ffd93d; --text:#e0e6ed;
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body {
-    background:var(--bg-dark); color:var(--text);
-    font-family:'Segoe UI',system-ui,sans-serif; min-height:100vh; overflow-x:hidden;
-  }
-  /* --- Holographic background --- */
-  body::before {
-    content:''; position:fixed; top:0; left:0; width:100%; height:100%;
-    background:radial-gradient(ellipse at 20% 30%, rgba(233,69,96,0.08), transparent 50%),
-               radial-gradient(ellipse at 80% 70%, rgba(255,217,61,0.06), transparent 50%),
-               radial-gradient(ellipse at 50% 100%, rgba(104,144,240,0.05), transparent 60%);
-    z-index:-1; pointer-events:none;
-  }
-  .header {
-    text-align:center; padding:20px;
-    background:linear-gradient(135deg,rgba(26,35,64,0.9),rgba(42,52,88,0.9));
-    border-bottom:2px solid var(--accent); position:sticky; top:0; z-index:100;
-    backdrop-filter:blur(10px);
-  }
-  .header h1 { color:var(--gold); font-size:1.8em; text-shadow:0 0 20px rgba(255,217,61,0.3); }
-  .turn-indicator {
-    display:inline-block; margin-top:8px; padding:4px 20px;
-    background:var(--accent); border-radius:20px; font-weight:bold; font-size:0.9em;
-    box-shadow:0 0 15px rgba(233,69,96,0.4);
-  }
-  .arena {
-    display:grid; grid-template-rows:1fr auto 1fr; gap:10px;
-    padding:15px; max-width:1200px; margin:0 auto;
-  }
-  .player-area {
-    background:var(--bg-panel); border-radius:12px; padding:15px;
-    border:1px solid var(--border); transition:border-color 0.3s;
-  }
-  .player-area.active-turn {
-    border-color:var(--accent); box-shadow:0 0 25px rgba(233,69,96,0.15);
-  }
-  .player-header {
-    display:flex; justify-content:space-between; align-items:center;
-    margin-bottom:12px; flex-wrap:wrap; gap:8px;
-  }
-  .player-name { font-size:1.1em; font-weight:bold; color:var(--gold); }
-  .player-stats { display:flex; gap:15px; font-size:0.85em; color:var(--text); opacity:0.8; }
-  .stat-badge { background:rgba(255,255,255,0.1); padding:2px 10px; border-radius:10px; }
-  /* --- Prize cards --- */
-  .prizes { display:flex; gap:6px; }
-  .prize-card {
-    width:32px; height:42px; border-radius:4px;
-    background:linear-gradient(135deg,#2a3458,#1a2340);
-    border:2px solid var(--border); display:flex; align-items:center; justify-content:center;
-    font-size:0.6em; color:var(--gold); transition:all 0.4s; cursor:default;
-  }
-  .prize-card.taken {
-    transform:rotateY(180deg) scale(0.8); opacity:0.3;
-    background:transparent; border-style:dashed;
-  }
-  .prize-card::before { content:'🎁'; font-size:1.2em; }
-  .prize-card.taken::before { content:'✓'; }
-  /* --- Board layout --- */
-  .board { display:grid; grid-template-columns:1fr 2fr; gap:12px; }
-  .active-slot {
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-  }
-  .bench { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
-  .bench-slot { width:90px; }
-  /* --- Card panel --- */
-  .card-panel {
-    width:100%; min-height:140px; border-radius:10px; padding:8px;
-    position:relative; overflow:hidden; transition:all 0.3s;
-    background:rgba(13,19,32,0.95);
-  }
-  .card-panel.active-card { min-height:180px; }
-  .card-panel::before {
-    content:''; position:absolute; inset:0; border-radius:10px; padding:2px;
-    background:var(--card-glow,#666);
-    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-    -webkit-mask-composite:xor; mask-composite:exclude;
-    z-index:1; pointer-events:none;
-  }
-  .card-panel.type-grass { --card-glow:var(--grass); box-shadow:0 0 15px rgba(120,200,80,0.2); }
-  .card-panel.type-fire { --card-glow:var(--fire); box-shadow:0 0 15px rgba(240,128,48,0.2); }
-  .card-panel.type-water { --card-glow:var(--water); box-shadow:0 0 15px rgba(104,144,240,0.2); }
-  .card-panel.type-lightning { --card-glow:var(--lightning); box-shadow:0 0 15px rgba(248,208,48,0.2); }
-  .card-panel.type-psychic { --card-glow:var(--psychic); box-shadow:0 0 15px rgba(248,88,136,0.2); }
-  .card-panel.type-fighting { --card-glow:var(--fighting); box-shadow:0 0 15px rgba(192,48,40,0.2); }
-  .card-panel.type-darkness { --card-glow:var(--darkness); box-shadow:0 0 15px rgba(112,88,152,0.2); }
-  .card-panel.type-metal { --card-glow:var(--metal); box-shadow:0 0 15px rgba(184,184,208,0.2); }
-  .card-panel.type-dragon { --card-glow:var(--dragon); box-shadow:0 0 15px rgba(168,144,240,0.2); }
-  .card-panel.type-colorless { --card-glow:var(--colorless); box-shadow:0 0 15px rgba(214,200,168,0.2); }
-  .card-panel.type-rainbow { --card-glow:var(--rainbow); box-shadow:0 0 20px rgba(255,107,107,0.15); }
-  .card-panel.empty { opacity:0.3; border:2px dashed var(--border); background:transparent; }
-  .card-panel.empty::before { display:none; }
-  .card-name { font-size:0.75em; font-weight:bold; text-align:center; margin-bottom:4px; z-index:2; position:relative; }
-  .card-hp-text { font-size:0.65em; text-align:right; color:#ff6b6b; z-index:2; position:relative; }
-  /* --- HP bar --- */
-  .hp-bar-container { width:100%; height:8px; background:rgba(255,255,255,0.1); border-radius:4px; overflow:hidden; margin:4px 0; z-index:2; position:relative; }
-  .hp-bar {
-    height:100%; background:linear-gradient(90deg,#51cf66,#51cf66); border-radius:4px;
-    transition:width 0.6s cubic-bezier(0.4,0,0.2,1), background 0.3s;
-  }
-  .hp-bar.medium { background:linear-gradient(90deg,#ffd43b,#fab005); }
-  .hp-bar.low { background:linear-gradient(90deg,#ff6b6b,#e03131); }
-  /* --- Energy icons --- */
-  .energy-row { display:flex; gap:3px; flex-wrap:wrap; justify-content:center; z-index:2; position:relative; }
-  .energy-icon { width:14px; height:14px; border-radius:50%; font-size:0.5em; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#fff; }
-  .energy-grass { background:var(--grass); }
-  .energy-fire { background:var(--fire); }
-  .energy-water { background:var(--water); }
-  .energy-lightning { background:var(--lightning); color:#333; }
-  .energy-psychic { background:var(--psychic); }
-  .energy-fighting { background:var(--fighting); }
-  .energy-darkness { background:var(--darkness); }
-  .energy-metal { background:var(--metal); }
-  .energy-colorless { background:var(--colorless); color:#333; }
-  /* --- Status conditions --- */
-  .status-row { display:flex; gap:4px; justify-content:center; margin-top:4px; z-index:2; position:relative; }
-  .status-icon {
-    width:20px; height:20px; border-radius:50%; font-size:0.7em;
-    display:flex; align-items:center; justify-content:center;
-    animation:pulse 2s infinite;
-  }
-  @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.15);} }
-  .status-poison { background:#a33; }
-  .status-burn { background:#e80; }
-  .status-sleep { background:#66c; }
-  .status-paralysis { background:#fc0; color:#333; }
-  .status-confusion { background:#c6c; }
-  /* --- Center divider --- */
-  .center-divider {
-    text-align:center; padding:10px; font-size:1.5em; color:var(--accent);
-    text-shadow:0 0 10px rgba(233,69,96,0.3);
-  }
-  /* --- Duel log --- */
-  .duel-log {
-    background:var(--bg-panel); border:1px solid var(--border); border-radius:12px;
-    padding:15px; max-width:1200px; margin:15px auto; max-height:250px; overflow-y:auto;
-  }
-  .duel-log h3 { color:var(--gold); margin-bottom:10px; font-size:1em; }
-  .log-entry {
-    padding:4px 10px; margin:2px 0; border-left:3px solid transparent;
-    font-size:0.85em; animation:fadeIn 0.3s; border-radius:0 4px 4px 0;
-  }
-  @keyframes fadeIn { from{opacity:0;transform:translateX(-10px);} to{opacity:1;transform:translateX(0);} }
-  .log-entry.draw { border-left-color:var(--water); }
-  .log-entry.attack { border-left-color:var(--fire); }
-  .log-entry.hp_change { border-left-color:var(--accent); color:#ff9999; }
-  .log-entry.evolve { border-left-color:var(--psychic); }
-  .log-entry.ko { border-left-color:#f00; font-weight:bold; background:rgba(255,0,0,0.05); }
-  .log-entry.turn { border-left-color:var(--gold); font-weight:bold; color:var(--gold); }
-  .log-entry.result { border-left-color:var(--gold); font-weight:bold; font-size:1em; }
-  /* --- Controls --- */
-  .controls {
-    display:flex; justify-content:center; align-items:center; gap:15px;
-    padding:15px; flex-wrap:wrap; max-width:1200px; margin:0 auto;
-  }
-  .controls button {
-    background:var(--accent); color:#fff; border:none; padding:8px 20px;
-    border-radius:8px; cursor:pointer; font-size:0.9em; transition:all 0.2s;
-  }
-  .controls button:hover { background:#c81e45; transform:translateY(-1px); box-shadow:0 4px 12px rgba(233,69,96,0.3); }
-  .controls button:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
-  .scrubber {
-    flex:1; min-width:200px; height:6px; -webkit-appearance:none; appearance:none;
-    background:var(--border); border-radius:3px; outline:none;
-  }
-  .scrubber::-webkit-slider-thumb {
-    -webkit-appearance:none; appearance:none; width:18px; height:18px;
-    border-radius:50%; background:var(--gold); cursor:pointer;
-    box-shadow:0 0 10px rgba(255,217,61,0.5);
-  }
-  .step-display { font-size:0.85em; color:var(--gold); min-width:80px; text-align:center; }
-  .file-input-wrapper { margin:15px auto; text-align:center; max-width:1200px; }
-  .file-input-wrapper input[type=file] {
-    background:var(--bg-panel); border:1px dashed var(--border); padding:10px 20px;
-    border-radius:8px; color:var(--text); cursor:pointer;
-  }
-  .placeholder-msg {
-    text-align:center; padding:40px; color:var(--text); opacity:0.5; font-size:1.1em;
-  }
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+:root {
+  --grass:#5cb85c; --fire:#ff7530; --water:#4a9eff; --lightning:#ffd700;
+  --psychic:#ff66cc; --fighting:#cc4444; --darkness:#6b5b95; --metal:#b0c4de;
+  --dragon:#b8860b; --colorless:#d2b48c; --rainbow:linear-gradient(135deg,#ff6b6b,#feca57,#48dbfb,#a29bfe);
+  --bg-darkest:#0d0d0d; --bg-dark:#1a1a2e; --bg-panel:#222244; --border-gold:#ffd700;
+  --border-outer:#555; --text:#f8f8f8; --text-shadow:#000; --pixel-font:'Press Start 2P', monospace;
+}
+
+* { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  background:var(--bg-darkest);
+  color:var(--text);
+  font-family:var(--pixel-font);
+  min-height:100vh;
+  overflow-x:hidden;
+  image-rendering:pixelated;
+  -webkit-font-smoothing:none;
+  font-smooth:never;
+}
+
+/* CRT Scanline Effect */
+body::after {
+  content:'';
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:repeating-linear-gradient(
+    to bottom,
+    rgba(0,0,0,0) 0px,
+    rgba(0,0,0,0) 2px,
+    rgba(0,0,0,0.15) 3px,
+    rgba(0,0,0,0) 4px
+  );
+  pointer-events:none; z-index:9999;
+}
+
+/* Retro starry background */
+body::before {
+  content:'';
+  position:fixed; top:0; left:0; width:100%; height:100%;
+  background:
+    radial-gradient(2px 2px at 10% 20%, rgba(255,255,255,0.4), transparent),
+    radial-gradient(2px 2px at 80% 10%, rgba(255,215,0,0.3), transparent),
+    radial-gradient(1px 1px at 50% 50%, rgba(255,255,255,0.3), transparent),
+    radial-gradient(1px 1px at 90% 80%, rgba(255,255,255,0.2), transparent),
+    radial-gradient(2px 2px at 33% 70%, rgba(255,215,0,0.2), transparent),
+    radial-gradient(1px 1px at 66% 33%, rgba(255,255,255,0.3), transparent),
+    var(--bg-dark);
+  background-size: 300px 300px, 400px 400px, 250px 250px, 350px 350px, 200px 200px, 180px 180px, 100% 100%;
+  z-index:-1;
+}
+
+.header {
+  text-align:center; padding:20px;
+  background:linear-gradient(180deg, #2a2a4e 0%, #1a1a2e 100%);
+  border-bottom:4px solid var(--border-gold);
+  border-image:linear-gradient(to right, transparent, var(--border-gold), transparent) 1;
+  position:relative; z-index:10;
+}
+
+.header h1 {
+  font-size:1.4em; color:var(--border-gold);
+  text-shadow:3px 3px 0 #000, -1px -1px 0 #b8860b;
+  letter-spacing:2px;
+}
+
+.turn-indicator {
+  display:inline-block; margin-top:12px; padding:8px 24px;
+  background:var(--bg-panel); border:3px solid var(--border-gold);
+  font-size:0.7em; color:var(--text);
+  box-shadow:0 0 0 3px #000, inset 0 0 0 2px #000;
+}
+
+.arena {
+  display:grid; grid-template-rows:auto auto auto; gap:8px;
+  padding:12px; max-width:1100px; margin:0 auto;
+}
+
+/* Retro panel style */
+.player-area {
+  background:var(--bg-dark);
+  border:4px solid var(--border-outer);
+  border-radius:0;
+  padding:12px;
+  position:relative;
+  box-shadow:
+    inset 0 0 0 2px #000,
+    inset 0 0 0 4px #444,
+    0 4px 0 #000;
+}
+
+.player-area.active-turn {
+  border-color:var(--border-gold);
+  box-shadow:
+    inset 0 0 0 2px #000,
+    inset 0 0 0 4px var(--border-gold),
+    0 0 15px rgba(255,215,0,0.3),
+    0 4px 0 #000;
+}
+
+.player-header {
+  display:flex; justify-content:space-between; align-items:center;
+  margin-bottom:12px; flex-wrap:wrap; gap:8px;
+}
+
+.player-name {
+  font-size:0.8em; color:var(--border-gold);
+  text-shadow:2px 2px 0 #000;
+}
+
+.player-stats { display:flex; gap:8px; font-size:0.5em; }
+
+.stat-badge {
+  background:#000; padding:4px 8px;
+  border:2px solid #555; color:var(--text);
+}
+
+/* Prize cards */
+.prizes { display:flex; gap:4px; }
+.prize-card {
+  width:24px; height:32px;
+  background:linear-gradient(135deg, #555, #222);
+  border:2px solid #000;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.5em; position:relative;
+  box-shadow:inset 0 0 0 1px #777;
+}
+
+.prize-card::after {
+  content:'★'; color:var(--border-gold);
+  font-size:1.2em; text-shadow:1px 1px 0 #000;
+}
+
+.prize-card.taken {
+  background:#111; opacity:0.3; border-style:dashed;
+}
+.prize-card.taken::after { content:'✓'; color:#555; }
+
+/* Board layout */
+.board { display:grid; grid-template-columns:200px 1fr; gap:10px; }
+.active-slot { display:flex; flex-direction:column; align-items:center; gap:6px; }
+.bench { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+.bench-slot { width:100px; }
+
+/* Pixel Card Panel */
+.card-panel {
+  width:100%; min-height:160px;
+  padding:6px; position:relative;
+  background:#1a1a2e;
+  border:4px solid #000;
+  box-shadow:
+    inset 0 0 0 2px var(--card-glow,#888),
+    inset 0 0 0 3px #000;
+  transition:all 0.3s;
+}
+.card-panel.active-card { min-height:200px; }
+
+.card-panel.type-grass { --card-glow:var(--grass); }
+.card-panel.type-fire { --card-glow:var(--fire); }
+.card-panel.type-water { --card-glow:var(--water); }
+.card-panel.type-lightning { --card-glow:var(--lightning); }
+.card-panel.type-psychic { --card-glow:var(--psychic); }
+.card-panel.type-fighting { --card-glow:var(--fighting); }
+.card-panel.type-darkness { --card-glow:var(--darkness); }
+.card-panel.type-metal { --card-glow:var(--metal); }
+.card-panel.type-dragon { --card-glow:var(--dragon); }
+.card-panel.type-colorless { --card-glow:var(--colorless); }
+.card-panel.type-rainbow { --card-glow:#ff6b6b; }
+
+.card-panel.empty {
+  background:rgba(0,0,0,0.3);
+  border:3px dashed #444;
+  box-shadow:none;
+}
+.card-panel.empty::before { display:none; }
+
+/* Card sprite area */
+.sprite-area {
+  width:100%; height:80px;
+  display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(circle, rgba(255,255,255,0.05), transparent);
+  position:relative; z-index:1;
+}
+.card-panel.active-card .sprite-area { height:100px; }
+
+.sprite-area.empty-sprite { opacity:0.2; font-size:2em; }
+
+.card-name {
+  font-size:0.5em; text-align:center;
+  margin:2px 0; color:var(--text);
+  text-shadow:1px 1px 0 #000;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  position:relative; z-index:2;
+}
+
+.card-hp-text {
+  font-size:0.45em; text-align:right;
+  color:#ff5555; text-shadow:1px 1px 0 #000;
+  position:relative; z-index:2;
+}
+
+/* Pixel HP Bar */
+.hp-bar-container {
+  width:100%; height:8px; background:#000;
+  border:1px solid #555; margin:4px 0;
+  position:relative; z-index:2; overflow:hidden;
+}
+
+.hp-bar {
+  height:100%; transition:width 0.6s steps(8), background 0.3s;
+}
+.hp-bar.high { background:repeating-linear-gradient(90deg, #5cb85c, #5cb85c 3px, #3d8b3d 3px, #3d8b3d 6px); }
+.hp-bar.medium { background:repeating-linear-gradient(90deg, #ffd700, #ffd700 3px, #ccac00 3px, #ccac00 6px); }
+.hp-bar.low { background:repeating-linear-gradient(90deg, #ff5555, #ff5555 3px, #cc3333 3px, #cc3333 6px); }
+
+/* Energy icons - pixel circles */
+.energy-row { display:flex; gap:3px; flex-wrap:wrap; justify-content:center; z-index:2; position:relative; }
+.energy-icon {
+  width:14px; height:14px; border-radius:50%;
+  border:2px solid #000; box-shadow:inset 0 0 0 1px rgba(255,255,255,0.3);
+}
+.energy-grass { background:var(--grass); }
+.energy-fire { background:var(--fire); }
+.energy-water { background:var(--water); }
+.energy-lightning { background:var(--lightning); }
+.energy-psychic { background:var(--psychic); }
+.energy-fighting { background:var(--fighting); }
+.energy-darkness { background:var(--darkness); }
+.energy-metal { background:var(--metal); }
+.energy-colorless { background:var(--colorless); }
+
+/* Status conditions */
+.status-row { display:flex; gap:4px; justify-content:center; margin-top:3px; z-index:2; position:relative; }
+.status-icon {
+  width:18px; height:18px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:0.6em; border:2px solid #000;
+  animation:pixelPulse 1s steps(2) infinite;
+}
+@keyframes pixelPulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
+.status-poison { background:#a020a0; }
+.status-burn { background:#ff6600; }
+.status-sleep { background:#5050ff; }
+.status-paralysis { background:#ffcc00; }
+.status-confusion { background:#ff00ff; }
+
+/* VS Divider */
+.center-divider {
+  text-align:center; padding:8px;
+  font-size:1.2em; color:var(--border-gold);
+  text-shadow:2px 2px 0 #000;
+  position:relative;
+}
+
+.center-divider::before, .center-divider::after {
+  content:''; display:inline-block;
+  width:30%; height:4px; background:var(--border-gold);
+  vertical-align:middle; margin:0 10px;
+  box-shadow:0 0 0 2px #000;
+}
+
+/* Duel Log */
+.duel-log {
+  background:var(--bg-dark);
+  border:4px solid var(--border-outer);
+  box-shadow:inset 0 0 0 2px #000, inset 0 0 0 4px #333;
+  padding:12px; max-width:1100px; margin:10px auto;
+  max-height:200px; overflow-y:auto;
+}
+
+.duel-log h3 {
+  color:var(--border-gold); margin-bottom:8px;
+  font-size:0.7em; text-shadow:2px 2px 0 #000;
+}
+
+.log-entry {
+  padding:3px 8px; margin:2px 0;
+  border-left:3px solid transparent;
+  font-size:0.5em; line-height:1.6;
+  animation:logFadeIn 0.2s steps(4);
+}
+@keyframes logFadeIn { from{opacity:0; transform:translateX(-5px);} to{opacity:1; transform:translateX(0);} }
+
+.log-entry.draw { border-left-color:var(--water); }
+.log-entry.attack { border-left-color:var(--fire); color:#ffaa55; }
+.log-entry.hp_change { border-left-color:#ff5555; color:#ff7777; }
+.log-entry.evolve { border-left-color:var(--psychic); color:#ff88dd; }
+.log-entry.ko { border-left-color:#ff0000; font-weight:bold; color:#ff4444; background:rgba(255,0,0,0.1); }
+.log-entry.turn { border-left-color:var(--border-gold); color:var(--border-gold); font-weight:bold; }
+.log-entry.result { border-left-color:var(--border-gold); color:var(--border-gold); font-size:1.2em; text-shadow:1px 1px 0 #000; }
+
+/* Controls */
+.controls {
+  display:flex; justify-content:center; align-items:center; gap:12px;
+  padding:12px; flex-wrap:wrap; max-width:1100px; margin:0 auto;
+}
+
+.controls button {
+  background:var(--bg-panel); color:var(--text);
+  border:3px solid var(--border-gold);
+  padding:8px 16px; font-family:var(--pixel-font);
+  font-size:0.6em; cursor:pointer;
+  box-shadow:0 4px 0 #000, inset 0 0 0 1px #000;
+  transition:all 0.1s;
+}
+
+.controls button:hover {
+  background:#2a2a5e; transform:translateY(-1px);
+  box-shadow:0 5px 0 #000, inset 0 0 0 1px #000;
+}
+
+.controls button:active {
+  transform:translateY(3px);
+  box-shadow:0 1px 0 #000, inset 0 0 0 1px #000;
+}
+
+.controls button:disabled {
+  opacity:0.4; cursor:not-allowed; transform:none;
+}
+
+.scrubber {
+  flex:1; min-width:150px; height:12px;
+  -webkit-appearance:none; appearance:none;
+  background:#000; border:2px solid #555; outline:none;
+}
+.scrubber::-webkit-slider-thumb {
+  -webkit-appearance:none; appearance:none;
+  width:16px; height:20px;
+  background:var(--border-gold); border:2px solid #000;
+  cursor:pointer; box-shadow:0 0 5px rgba(255,215,0,0.5);
+}
+.scrubber::-moz-range-thumb {
+  width:16px; height:20px;
+  background:var(--border-gold); border:2px solid #000;
+  cursor:pointer;
+}
+
+.step-display {
+  font-size:0.55em; color:var(--border-gold);
+  min-width:70px; text-align:center;
+  text-shadow:1px 1px 0 #000;
+}
+
+.file-input-wrapper {
+  margin:15px auto; text-align:center; max-width:1100px;
+}
+.file-input-wrapper input[type=file] {
+  background:var(--bg-dark); border:3px dashed #555;
+  padding:12px 24px; color:var(--text);
+  cursor:pointer; font-family:var(--pixel-font);
+  font-size:0.6em;
+}
+.file-input-wrapper input[type=file]:hover {
+  border-color:var(--border-gold);
+}
+
+.placeholder-msg {
+  text-align:center; padding:40px;
+  color:var(--text); opacity:0.5; font-size:0.7em;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width:10px; }
+::-webkit-scrollbar-track { background:#000; border:2px solid #333; }
+::-webkit-scrollbar-thumb { background:var(--bg-panel); border:1px solid var(--border-gold); }
 </style>
 </head>
 <body>
+
 <div class="header">
-  <h1>⚔️ PTCG Battle Visualizer</h1>
-  <div class="turn-indicator" id="turnIndicator">No match loaded</div>
+  <h1>⚔️ PTCG PIXEL BATTLE ⚔️</h1>
+  <div class="turn-indicator" id="turnIndicator">NO MATCH LOADED</div>
 </div>
 
 <div class="file-input-wrapper">
@@ -203,19 +385,19 @@
 </div>
 
 <div class="placeholder-msg" id="placeholderMsg">
-  📁 Load a match log JSON file to begin visualization
+  ▶ LOAD A MATCH LOG JSON FILE TO BEGIN ◀
 </div>
 
 <div id="visualizer" style="display:none;">
+
   <div class="arena">
-    <!-- Opponent (top) -->
+    <!-- Opponent (Top) -->
     <div class="player-area" id="oppArea">
       <div class="player-header">
-        <span class="player-name">Opponent</span>
+        <span class="player-name">OPPONENT</span>
         <div class="player-stats">
-          <span class="stat-badge">Deck: <span id="oppDeck">0</span></span>
-          <span class="stat-badge">Hand: <span id="oppHand">0</span></span>
-          <span class="stat-badge">Discard: <span id="oppDiscard">0</span></span>
+          <span class="stat-badge">DECK:<span id="oppDeck">0</span></span>
+          <span class="stat-badge">HAND:<span id="oppHand">0</span></span>
         </div>
         <div class="prizes" id="oppPrizes"></div>
       </div>
@@ -225,16 +407,15 @@
       </div>
     </div>
 
-    <div class="center-divider">⚔️ VS ⚔️</div>
+    <div class="center-divider">VS</div>
 
-    <!-- Player (bottom) -->
+    <!-- Player (Bottom) -->
     <div class="player-area" id="playerArea">
       <div class="player-header">
-        <span class="player-name">You</span>
+        <span class="player-name">YOU</span>
         <div class="player-stats">
-          <span class="stat-badge">Deck: <span id="playerDeck">0</span></span>
-          <span class="stat-badge">Hand: <span id="playerHand">0</span></span>
-          <span class="stat-badge">Discard: <span id="playerDiscard">0</span></span>
+          <span class="stat-badge">DECK:<span id="playerDeck">0</span></span>
+          <span class="stat-badge">HAND:<span id="playerHand">0</span></span>
         </div>
         <div class="prizes" id="playerPrizes"></div>
       </div>
@@ -246,17 +427,18 @@
   </div>
 
   <div class="duel-log">
-    <h3>📜 Duel Log</h3>
+    <h3>📜 BATTLE LOG</h3>
     <div id="logContainer"></div>
   </div>
 
   <div class="controls">
-    <button id="prevBtn" onclick="stepMatch(-1)">⏮ Prev</button>
+    <button id="prevBtn" onclick="stepMatch(-1)">◀ PREV</button>
     <input type="range" class="scrubber" id="scrubber" min="0" max="0" value="0" oninput="jumpToStep(this.value)">
-    <button id="nextBtn" onclick="stepMatch(1)">Next ⏭</button>
-    <button id="playBtn" onclick="togglePlay()">▶ Play</button>
+    <button id="nextBtn" onclick="stepMatch(1)">NEXT ▶</button>
+    <button id="playBtn" onclick="togglePlay()">▶ PLAY</button>
     <span class="step-display" id="stepDisplay">0 / 0</span>
   </div>
+
 </div>
 
 <script>
@@ -272,7 +454,7 @@ const ENERGY_COLORS = {
   TEAM_ROCKET:'darkness'
 };
 
-// --- File loading ---
+// File loading
 document.getElementById('fileInput').addEventListener('change', function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -282,7 +464,7 @@ document.getElementById('fileInput').addEventListener('change', function(e) {
       matchData = JSON.parse(ev.target.result);
       initVisualizer();
     } catch(err) {
-      alert('Invalid JSON file: ' + err.message);
+      alert('Invalid JSON: ' + err.message);
     }
   };
   reader.readAsText(file);
@@ -304,8 +486,6 @@ function renderStep(stepIdx) {
   currentStep = stepIdx;
   const step = matchData.steps[stepIdx];
 
-  // Determine which player's observation to use for full board
-  // Player 0's observation has both players' states (own=full, opp=partial)
   let obs = null;
   let ourIdx = 0;
   for (let p = 0; p < step.observations.length; p++) {
@@ -325,23 +505,19 @@ function renderStep(stepIdx) {
   const firstPlayer = current.firstPlayer;
   const activePlayerIdx = (turn % 2 === 0) ? firstPlayer : (1 - firstPlayer);
 
-  // Highlight active player
   document.getElementById('playerArea').classList.toggle('active-turn', ourIdx === activePlayerIdx);
   document.getElementById('oppArea').classList.toggle('active-turn', (1-ourIdx) === activePlayerIdx);
 
-  document.getElementById('turnIndicator').textContent = `Turn ${turn + 1} — ${activePlayerIdx === ourIdx ? 'Your' : "Opponent's"} Move`;
+  document.getElementById('turnIndicator').textContent =
+    `TURN ${turn + 1} - ${activePlayerIdx === ourIdx ? 'YOUR MOVE' : 'OPP MOVE'}`;
 
-  // Render both players
   const ourPlayer = players[ourIdx] || {};
   const oppPlayer = players[1 - ourIdx] || {};
 
   renderPlayer('player', ourPlayer);
   renderPlayer('opp', oppPlayer);
-
-  // Render logs
   renderLogs(step, stepIdx);
 
-  // Update controls
   document.getElementById('scrubber').value = stepIdx;
   document.getElementById('stepDisplay').textContent = `${stepIdx + 1} / ${matchData.steps.length}`;
   document.getElementById('prevBtn').disabled = stepIdx === 0;
@@ -349,10 +525,8 @@ function renderStep(stepIdx) {
 }
 
 function renderPlayer(prefix, player) {
-  // Stats
   document.getElementById(prefix + 'Deck').textContent = player.deckCount || 0;
   document.getElementById(prefix + 'Hand').textContent = player.handCount || 0;
-  document.getElementById(prefix + 'Discard').textContent = (player.discard || []).length;
 
   // Prizes
   const prizeContainer = document.getElementById(prefix + 'Prizes');
@@ -367,15 +541,14 @@ function renderPlayer(prefix, player) {
     prizeContainer.appendChild(div);
   }
 
-  // Active Pokémon
+  // Active
   const activeEl = document.getElementById(prefix + 'Active');
   const active = player.active;
   if (active && active.cardId) {
     renderCardPanel(activeEl, active, true);
   } else if (active) {
-    // Face-down
     activeEl.className = 'card-panel active-card type-colorless empty';
-    activeEl.innerHTML = '<div class="card-name">???</div><div style="text-align:center;font-size:2em;opacity:0.3">🂠</div>';
+    activeEl.innerHTML = '<div class="sprite-area empty-sprite">❓</div><div class="card-name">??? ???</div>';
   } else {
     activeEl.className = 'card-panel active-card empty';
     activeEl.innerHTML = '';
@@ -396,7 +569,7 @@ function renderPlayer(prefix, player) {
     } else {
       const empty = document.createElement('div');
       empty.className = 'card-panel empty';
-      empty.style.minHeight = '100px';
+      empty.style.minHeight = '120px';
       empty.innerHTML = '';
       slot.appendChild(empty);
     }
@@ -410,16 +583,21 @@ function renderCardPanel(el, mon, isActive) {
   const typeClass = ENERGY_COLORS[energyType] || 'colorless';
   el.classList.add('type-' + typeClass);
 
-  const name = mon.name || mon.cardId || 'Unknown';
+  const name = mon.name || (mon.cardId ? mon.cardId.slice(-8).toUpperCase() : 'UNKNOWN');
   const hp = mon.hp || 0;
   const damage = mon.damage || 0;
   const currentHp = Math.max(0, hp - damage);
   const hpPct = hp > 0 ? (currentHp / hp * 100) : 0;
-  const hpClass = hpPct > 50 ? '' : hpPct > 25 ? 'medium' : 'low';
+  const hpClass = hpPct > 50 ? 'high' : hpPct > 25 ? 'medium' : 'low';
 
   let html = '';
+  // Sprite placeholder (CSS pixel-art style)
+  html += '<div class="sprite-area">';
+  html += `<canvas class="pixel-sprite" width="32" height="32" style="width:64px;height:64px;image-rendering:pixelated;"></canvas>`;
+  html += '</div>';
+
   html += `<div class="card-name">${escapeHtml(name)}</div>`;
-  html += `<div class="card-hp-text">HP: ${currentHp}/${hp}</div>`;
+  html += `<div class="card-hp-text">HP ${currentHp}/${hp}</div>`;
   html += `<div class="hp-bar-container"><div class="hp-bar ${hpClass}" style="width:${hpPct}%"></div></div>`;
 
   // Energy
@@ -429,18 +607,19 @@ function renderCardPanel(el, mon, isActive) {
     energies.forEach(e => {
       const eType = typeof e === 'string' ? e : (e.energyType || 'COLORLESS');
       const eClass = ENERGY_COLORS[eType] || 'colorless';
-      html += `<div class="energy-icon energy-${eClass}" title="${eType}">●</div>`;
+      html += `<div class="energy-icon energy-${eClass}" title="${eType}"></div>`;
     });
     html += '</div>';
   }
 
-  // Status conditions
+  // Status
   const statuses = [];
-  if (mon.poisoned) statuses.push({cls:'poison', icon:'☠', title:'Poisoned'});
-  if (mon.burned) statuses.push({cls:'burn', icon:'🔥', title:'Burned'});
-  if (mon.asleep) statuses.push({cls:'sleep', icon:'💤', title:'Asleep'});
-  if (mon.paralyzed) statuses.push({cls:'paralysis', icon:'⚡', title:'Paralyzed'});
-  if (mon.confused) statuses.push({cls:'confusion', icon:'❓', title:'Confused'});
+  if (mon.poisoned) statuses.push({cls:'poison', icon:'P', title:'Poison'});
+  if (mon.burned) statuses.push({cls:'burn', icon:'B', title:'Burn'});
+  if (mon.asleep) statuses.push({cls:'sleep', icon:'S', title:'Sleep'});
+  if (mon.paralyzed) statuses.push({cls:'paralysis', icon:'X', title:'Paralysis'});
+  if (mon.confused) statuses.push({cls:'confusion', icon:'?', title:'Confusion'});
+
   if (statuses.length > 0) {
     html += '<div class="status-row">';
     statuses.forEach(s => {
@@ -450,27 +629,174 @@ function renderCardPanel(el, mon, isActive) {
   }
 
   el.innerHTML = html;
+
+  // Draw pixel sprite on canvas
+  const canvas = el.querySelector('.pixel-sprite');
+  if (canvas) {
+    drawPixelSprite(canvas, energyType, mon);
+  }
+}
+
+// Procedural pixel-art sprite generator (deterministic from cardId)
+function drawPixelSprite(canvas, energyType, mon) {
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0, 0, 32, 32);
+
+  // Generate a unique seed from cardId
+  const seed = mon.cardId ? mon.cardId.split('').reduce((a,b) => a + b.charCodeAt(0), 0) : 42;
+  const rng = mulberry32(seed);
+
+  const palettes = {
+    GRASS: ['#5cb85c', '#3d8b3d', '#2d6b2d', '#1a4a1a'],
+    FIRE: ['#ff7530', '#cc5500', '#993300', '#662200'],
+    WATER: ['#4a9eff', '#2570cc', '#004499', '#002266'],
+    LIGHTNING: ['#ffd700', '#ccac00', '#998800', '#665500'],
+    PSYCHIC: ['#ff66cc', '#cc44aa', '#992288', '#660055'],
+    FIGHTING: ['#cc4444', '#993333', '#662222', '#441111'],
+    DARKNESS: ['#6b5b95', '#4a3b6b', '#2d1d4a', '#1a0d2a'],
+    METAL: ['#b0c4de', '#8090b0', '#506080', '#304060'],
+    DRAGON: ['#b8860b', '#8b6508', '#5e4505', '#312303'],
+    COLORLESS: ['#d2b48c', '#a08a6a', '#70604a', '#40352a'],
+    RAINBOW: ['#ff6b6b', '#feca57', '#48dbfb', '#a29bfe'],
+    TEAM_ROCKET: ['#6b5b95', '#4a3b6b', '#2d1d4a', '#1a0d2a']
+  };
+
+  const palette = palettes[energyType] || palettes.COLORLESS;
+
+  // Draw a simple creature silhouette
+  // Body shape varies by seed
+  const shapeType = Math.floor(rng() * 4);
+  
+  ctx.fillStyle = palette[0]; // Main color
+  
+  if (shapeType === 0) {
+    // Round blob body
+    drawPixelCircle(ctx, 16, 18, 8, palette[0]);
+    drawPixelCircle(ctx, 16, 18, 6, palette[1]);
+    // Eyes
+    ctx.fillStyle = '#000';
+    drawPixelRect(ctx, 12, 14, 2, 2);
+    drawPixelRect(ctx, 18, 14, 2, 2);
+    ctx.fillStyle = '#fff';
+    drawPixelRect(ctx, 12, 14, 1, 1);
+    drawPixelRect(ctx, 18, 14, 1, 1);
+  } else if (shapeType === 1) {
+    // Quadruped
+    drawPixelRect(ctx, 8, 14, 16, 8, palette[0]);
+    drawPixelRect(ctx, 10, 16, 12, 4, palette[1]);
+    // Legs
+    drawPixelRect(ctx, 8, 22, 3, 4, palette[2]);
+    drawPixelRect(ctx, 21, 22, 3, 4, palette[2]);
+    // Head
+    drawPixelRect(ctx, 6, 10, 8, 6, palette[0]);
+    // Eyes
+    ctx.fillStyle = '#000';
+    drawPixelRect(ctx, 8, 12, 2, 2);
+    // Ears
+    drawPixelRect(ctx, 6, 6, 2, 4, palette[1]);
+    drawPixelRect(ctx, 12, 6, 2, 4, palette[1]);
+  } else if (shapeType === 2) {
+    // Bird-like
+    drawPixelRect(ctx, 10, 12, 12, 8, palette[0]);
+    drawPixelRect(ctx, 12, 14, 8, 4, palette[1]);
+    // Wings
+    drawPixelRect(ctx, 6, 14, 4, 6, palette[2]);
+    drawPixelRect(ctx, 22, 14, 4, 6, palette[2]);
+    // Head/Beak
+    drawPixelRect(ctx, 16, 8, 4, 4, palette[0]);
+    ctx.fillStyle = palette[3];
+    drawPixelRect(ctx, 20, 10, 2, 2);
+    // Eye
+    ctx.fillStyle = '#000';
+    drawPixelRect(ctx, 17, 10, 1, 1);
+  } else {
+    // Tall creature
+    drawPixelRect(ctx, 10, 6, 12, 20, palette[0]);
+    drawPixelRect(ctx, 12, 8, 8, 16, palette[1]);
+    // Eyes
+    ctx.fillStyle = '#000';
+    drawPixelRect(ctx, 13, 12, 2, 2);
+    drawPixelRect(ctx, 17, 12, 2, 2);
+    ctx.fillStyle = '#fff';
+    drawPixelRect(ctx, 13, 12, 1, 1);
+    drawPixelRect(ctx, 17, 12, 1, 1);
+    // Feet
+    ctx.fillStyle = palette[2];
+    drawPixelRect(ctx, 10, 26, 4, 2);
+    drawPixelRect(ctx, 18, 26, 4, 2);
+  }
+
+  // Add type-specific accent
+  ctx.fillStyle = palette[3];
+  if (energyType === 'FIRE') {
+    // Flame on top
+    drawPixelRect(ctx, 14, 2, 4, 4, '#ff4400');
+    drawPixelRect(ctx, 15, 0, 2, 2, '#ffaa00');
+  } else if (energyType === 'WATER') {
+    // Water drop
+    drawPixelRect(ctx, 15, 0, 2, 2, '#4a9eff');
+  } else if (energyType === 'GRASS') {
+    // Leaf
+    drawPixelRect(ctx, 14, 0, 4, 2, '#3d8b3d');
+    drawPixelRect(ctx, 15, 2, 2, 2, '#5cb85c');
+  } else if (energyType === 'LIGHTNING') {
+    // Spark
+    drawPixelRect(ctx, 15, 0, 2, 4, '#ffd700');
+    drawPixelRect(ctx, 14, 1, 4, 1, '#ffaa00');
+  } else if (energyType === 'PSYCHIC') {
+    // Star
+    drawPixelRect(ctx, 15, 0, 2, 2, '#ff66cc');
+  } else if (energyType === 'DRAGON') {
+    // Horns
+    drawPixelRect(ctx, 10, 2, 2, 4, '#b8860b');
+    drawPixelRect(ctx, 20, 2, 2, 4, '#b8860b');
+  }
+}
+
+function drawPixelRect(ctx, x, y, w, h, color) {
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+}
+
+function drawPixelCircle(ctx, cx, cy, r, color) {
+  ctx.fillStyle = color;
+  for (let y = -r; y <= r; y++) {
+    for (let x = -r; x <= r; x++) {
+      if (x*x + y*y <= r*r) {
+        ctx.fillRect(cx + x, cy + y, 1, 1);
+      }
+    }
+  }
+}
+
+// Seeded RNG (Mulberry32)
+function mulberry32(a) {
+  return function() {
+    var t = a += 0x6D2B79F5;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
 }
 
 function renderLogs(step, stepIdx) {
   const container = document.getElementById('logContainer');
   container.innerHTML = '';
 
-  // Collect logs from all observations in this step
   let allLogs = [];
   step.observations.forEach((obs, i) => {
     (obs.logs || []).forEach(log => {
-      allLogs.push({ ...log, _playerIdx: i });
+      allLogs.push({...log, _playerIdx: i});
     });
   });
 
-  // Also include actions taken
   if (step.actions) {
     step.actions.forEach((action, i) => {
       if (action !== null && action !== undefined) {
         allLogs.push({
           type: 'ACTION',
-          text: `Player ${i} chose: ${JSON.stringify(action)}`,
+          text: `P${i} selected: ${JSON.stringify(action)}`,
           _playerIdx: i
         });
       }
@@ -478,7 +804,7 @@ function renderLogs(step, stepIdx) {
   }
 
   if (allLogs.length === 0) {
-    container.innerHTML = '<div class="log-entry turn">--- Step ' + (stepIdx + 1) + ' ---</div>';
+    container.innerHTML = `<div class="log-entry turn">--- STEP ${stepIdx + 1} ---</div>`;
     return;
   }
 
@@ -499,42 +825,27 @@ function translateLog(log) {
   const damage = log.damage || log.value || 0;
 
   switch(type) {
-    case 'DRAW':
-      return `${player} drew a card.`;
+    case 'DRAW': return `${player} drew a card.`;
     case 'PLAY':
-    case 'PLAY_CARD':
-      return `${player} played ${name || cardId}.`;
+    case 'PLAY_CARD': return `${player} played ${name || cardId}.`;
     case 'ATTACH':
-    case 'ATTACH_ENERGY':
-      return `${player} attached energy to ${name || 'a Pokémon'}.`;
-    case 'EVOLVE':
-      return `${player} evolved to ${name || cardId}.`;
-    case 'ATTACK':
-      return `${player} attacks with ${name || 'a move'}!`;
-    case 'HP_CHANGE':
-      return `${name || 'A Pokémon'} took ${damage} damage!`;
+    case 'ATTACH_ENERGY': return `${player} attached energy to ${name || 'a Pokemon'}.`;
+    case 'EVOLVE': return `${player} evolved to ${name || cardId}.`;
+    case 'ATTACK': return `${player} attacks with ${name || 'a move'}!`;
+    case 'HP_CHANGE': return `${name || 'A Pokemon'} took ${damage} damage!`;
     case 'KO':
-    case 'KNOCKOUT':
-      return `💥 ${name || 'A Pokémon'} was Knocked Out!`;
+    case 'KNOCKOUT': return `>> ${name || 'A Pokemon'} was Knocked Out! <<`;
     case 'COIN_FLIP':
-    case 'COIN':
-      return `🪙 Coin flip: ${log.result || 'unknown'}.`;
+    case 'COIN': return `Coin flip: ${log.result || '?'}.`;
     case 'TURN_START':
-    case 'TURN':
-      return `--- Turn ${log.turn || ''} ---`;
-    case 'MULLIGAN':
-      return `${player} took a mulligan.`;
+    case 'TURN': return `--- Turn ${log.turn || ''} ---`;
+    case 'MULLIGAN': return `${player} took a mulligan.`;
     case 'PRIZE_TAKE':
-    case 'PRIZE':
-      return `${player} took a Prize card!`;
-    case 'STATUS':
-      return `${name || 'A Pokémon'} is now ${log.status || 'affected'}.`;
-    case 'RETREAT':
-      return `${player} retreated ${name || 'their Pokémon'}.`;
-    case 'RESULT':
-      return `🏆 Game Over! Result: ${log.result || 'Unknown'}`;
-    case 'ACTION':
-      return log.text || '';
+    case 'PRIZE': return `${player} took a Prize card!`;
+    case 'STATUS': return `${name || 'A Pokemon'} is now ${log.status || 'affected'}.`;
+    case 'RETREAT': return `${player} retreated ${name || 'their Pokemon'}.`;
+    case 'RESULT': return `>> GAME OVER! Result: ${log.result || 'Unknown'} <<`;
+    case 'ACTION': return log.text || '';
     default:
       return `${type}: ${name || cardId || ''} ${damage ? '(' + damage + ')' : ''}`.trim();
   }
@@ -546,7 +857,6 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
-// --- Navigation ---
 function stepMatch(delta) {
   if (!matchData) return;
   const newStep = currentStep + delta;
@@ -566,23 +876,22 @@ function togglePlay() {
   if (isPlaying) {
     clearInterval(playInterval);
     isPlaying = false;
-    btn.textContent = '▶ Play';
+    btn.textContent = '▶ PLAY';
   } else {
     isPlaying = true;
-    btn.textContent = '⏸ Pause';
+    btn.textContent = '⏸ PAUSE';
     playInterval = setInterval(() => {
       if (currentStep < matchData.steps.length - 1) {
         renderStep(currentStep + 1);
       } else {
         clearInterval(playInterval);
         isPlaying = false;
-        btn.textContent = '▶ Play';
+        btn.textContent = '▶ PLAY';
       }
-    }, 1000);
+    }, 1200);
   }
 }
 
-// Keyboard navigation
 document.addEventListener('keydown', (e) => {
   if (!matchData) return;
   if (e.key === 'ArrowLeft') stepMatch(-1);
